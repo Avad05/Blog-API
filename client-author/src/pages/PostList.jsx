@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Edit2, Trash2, Globe, EyeOff } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const PostList = () => {
   const { token } = useAuth();
@@ -11,7 +12,7 @@ const PostList = () => {
 
   const fetchPosts = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/posts/all', {
+      const res = await fetch(`${API_BASE_URL}/posts/all`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch posts');
@@ -30,7 +31,7 @@ const PostList = () => {
 
   const togglePublish = async (id, currentStatus) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/posts/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/posts/${id}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -49,7 +50,7 @@ const PostList = () => {
   const deletePost = async (id) => {
     if (!window.confirm('Are you sure you want to delete this post?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/posts/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/posts/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

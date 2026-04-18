@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import API_BASE_URL from '../config';
 import { Editor } from '@tinymce/tinymce-react';
 
 const PostEditor = () => {
@@ -19,7 +20,7 @@ const PostEditor = () => {
     if (id) {
       const fetchPost = async () => {
         try {
-          const res = await fetch(`http://localhost:5000/api/posts/all`, {
+          const res = await fetch(`${API_BASE_URL}/posts/all`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           const data = await res.json();
@@ -57,8 +58,8 @@ const PostEditor = () => {
 
     try {
       const url = id
-        ? `http://localhost:5000/api/posts/${id}`
-        : `http://localhost:5000/api/posts`;
+        ? `${API_BASE_URL}/posts/${id}`
+        : `${API_BASE_URL}/posts`;
       const method = id ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -130,7 +131,7 @@ const PostEditor = () => {
                   const formData = new FormData();
                   formData.append('file', blobInfo.blob(), blobInfo.filename());
                   
-                  fetch('http://localhost:5000/api/upload', {
+                  fetch(`${API_BASE_URL}/upload`, {
                     method: 'POST',
                     headers: {
                       Authorization: `Bearer ${token}`
