@@ -1,0 +1,28 @@
+{
+  "name": "blog-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"npm run dev:api\" \"npm run dev:public\" \"npm run dev:author\"",
+    "dev:api": "npm run dev --prefix api",
+    "dev:public": "npm run dev --prefix client-public",
+    "dev:author": "npm run dev --prefix client-author",
+    "install:all": "npm install && npm install --prefix api && npm install --prefix client-public && npm install --prefix client-author"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Avad05/Blog-API.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Avad05/Blog-API/issues"
+  },
+  "homepage": "https://github.com/Avad05/Blog-API#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
