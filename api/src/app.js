@@ -13,6 +13,7 @@ const PORT = process.env.PORT || 3000;
 // CORS — allow Cloudflare Pages deployments and local dev
 const allowedOrigins = [
   /^https:\/\/.*\.pages\.dev$/,      // any Cloudflare Pages subdomain
+  /^https:\/\/.*\.workers\.dev$/,    // any Cloudflare Workers subdomain
   "http://localhost:5173",            // client-public local dev
   "http://localhost:5174",            // client-author local dev
   ...(process.env.ALLOWED_ORIGINS
