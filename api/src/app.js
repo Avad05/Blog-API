@@ -10,8 +10,34 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS — allow Cloudflare Pages deployments and local dev
+const allowedOrigins = [
+  /^https:\/\/.*\.pages\.dev$/,      // any Cloudflare Pages subdomain
+  "http://localhost:5173",            // client-public local dev
+  "http://localhost:5174",            // client-author local dev
+  ...(process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+    : []),
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow requests with no origin (mobile apps, curl, Render health checks)
+      if (!origin) return callback(null, true);
+      const allowed = allowedOrigins.some((o) =>
+        o instanceof RegExp ? o.test(origin) : o === origin
+      );
+      if (allowed) return callback(null, true);
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 // Middleware
-app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
