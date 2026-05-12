@@ -9,6 +9,7 @@ const uploadRoutes = require("./routes/uploadRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const KEEP_ALIVE_INTERVAL_MS = 60 * 60 * 1000;
 
 // CORS — allow Cloudflare Pages deployments and local dev
 const allowedOrigins = [
@@ -64,8 +65,33 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error." });
 });
 
+function startKeepAlive() {
+  const serverUrl = process.env.KEEP_ALIVE_URL || process.env.RENDER_EXTERNAL_URL;
+
+  if (!serverUrl) {
+    console.log("Keep-alive disabled. Set KEEP_ALIVE_URL to enable hourly pings.");
+    return;
+  }
+
+  const pingUrl = new URL("/", serverUrl).toString();
+
+  const pingServer = async () => {
+    try {
+      const response = await fetch(pingUrl);
+      console.log(`Keep-alive ping: ${response.status} ${pingUrl}`);
+    } catch (error) {
+      console.error(`Keep-alive ping failed: ${error.message}`);
+    }
+  };
+
+  pingServer();
+  const interval = setInterval(pingServer, KEEP_ALIVE_INTERVAL_MS);
+  interval.unref?.();
+}
+
 app.listen(PORT, () => {
   console.log(`🚀 Blog API running at http://localhost:${PORT}`);
+  startKeepAlive();
 });
 
 module.exports = app;
