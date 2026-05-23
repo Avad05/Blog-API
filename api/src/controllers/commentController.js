@@ -3,7 +3,7 @@ const prisma = require("../lib/prisma");
 // POST /api/posts/:postId/comments - Add comment (Public)
 const createComment = async (req, res) => {
   const { postId } = req.params;
-  const { username, content } = req.body;
+  const { username, content, parentId } = req.body;
 
   if (!username || !content) {
     return res.status(400).json({ error: "Username and content are required." });
@@ -15,8 +15,20 @@ const createComment = async (req, res) => {
     if (!post.published)
       return res.status(403).json({ error: "Cannot comment on an unpublished post." });
 
+    if (parentId) {
+      const parentComment = await prisma.comment.findUnique({ where: { id: parentId } });
+      if (!parentComment) {
+        return res.status(404).json({ error: "Parent comment not found." });
+      }
+    }
+
     const comment = await prisma.comment.create({
-      data: { username, content, postId },
+      data: { 
+        username, 
+        content, 
+        postId,
+        parentId: parentId || null
+      },
     });
     res.status(201).json(comment);
   } catch (err) {

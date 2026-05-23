@@ -2,27 +2,27 @@
 
 /* ─── Design Tokens ──────────────────────────────── */
 :root {
-  --bg:          #08080c;
-  --bg-card:     #12121a;
-  --bg-hover:    #181824;
-  --border:      #222233;
-  --border-glow: #6c6cff33;
+  --bg:          #050508;
+  --bg-card:     rgba(18, 18, 28, 0.45);
+  --bg-hover:    rgba(108, 108, 255, 0.08);
+  --border:      rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(108, 108, 255, 0.25);
   --accent:      #6c6cff;
   --accent-light:#a78bfa;
-  --accent-dim:  #6c6cff22;
+  --accent-dim:  rgba(108, 108, 255, 0.15);
   --text:        #e2e2f0;
-  --text-muted:  #8888aa;
-  --text-subtle: #55556a;
-  --tag-bg:      #1a1a2e;
-  --code-bg:     #0d0d14;
+  --text-muted:  #a0a0c0;
+  --text-subtle: #686885;
+  --tag-bg:      rgba(108, 108, 255, 0.15);
+  --code-bg:     rgba(13, 13, 20, 0.5);
   --success:     #22c55e;
   --danger:      #f87171;
   --warning:     #fbbf24;
-  --radius:      12px;
-  --radius-sm:   8px;
-  --shadow:      0 4px 24px rgba(0,0,0,0.5);
-  --shadow-accent: 0 0 40px rgba(108,108,255,0.1);
-  --transition:  0.2s ease;
+  --radius:      16px;
+  --radius-sm:   10px;
+  --shadow:      0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --shadow-accent: 0 0 40px rgba(108, 108, 255, 0.15);
+  --transition:  0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   
   /* Dashboard Specific */
   --sidebar-width: 260px;
@@ -35,9 +35,46 @@ html { scroll-behavior: smooth; }
 body {
   font-family: 'Inter', sans-serif;
   background: var(--bg);
+  background-attachment: fixed;
   color: var(--text);
   line-height: 1.6;
   min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before, body::after {
+  content: '';
+  position: absolute;
+  width: 50vw;
+  height: 50vw;
+  max-width: 600px;
+  max-height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(108, 108, 255, 0.12) 0%, rgba(167, 139, 250, 0.06) 50%, transparent 70%);
+  filter: blur(90px);
+  z-index: -10;
+  pointer-events: none;
+  animation: float-blob 25s infinite alternate ease-in-out;
+}
+
+body::before {
+  top: 10%;
+  left: -10vw;
+}
+
+body::after {
+  bottom: 10%;
+  right: -10vw;
+  animation-delay: -12s;
+  animation-duration: 30s;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.1) 0%, rgba(108, 108, 255, 0.04) 50%, transparent 70%);
+}
+
+@keyframes float-blob {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(6vw, 8vh) scale(1.1); }
+  100% { transform: translate(-3vw, -6vh) scale(0.9); }
 }
 
 img { max-width: 100%; display: block; }
@@ -59,7 +96,9 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; bac
 
 .dashboard-sidebar {
   width: var(--sidebar-width);
-  background: var(--bg-card);
+  background: rgba(18, 18, 28, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -84,8 +123,9 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; bac
   display: flex;
   align-items: center;
   padding: 0 2rem;
-  background: rgba(8, 8, 12, 0.8);
-  backdrop-filter: blur(12px);
+  background: rgba(6, 6, 9, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   position: sticky;
   top: 0;
   z-index: 30;
@@ -286,13 +326,15 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; bac
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: radial-gradient(circle at center, var(--bg-card) 0%, var(--bg) 100%);
+  background: transparent;
 }
 
 .auth-card {
   width: 100%;
   max-width: 420px;
   background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 2.5rem 2rem;
@@ -317,3 +359,93 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; bac
   color: var(--text-muted);
   font-size: 0.95rem;
 }
+
+/* ─── Dashboard Cards & Panels ───────────────────── */
+.dashboard-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 2rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.stat-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  box-shadow: var(--shadow);
+  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.stat-card:hover {
+  border-color: var(--border-glow);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-accent);
+}
+
+.post-item-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.post-item-card:hover {
+  border-color: var(--border-glow);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-accent);
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.45s ease both;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Comment Moderation ─────────────────────────── */
+.moderation-comments-section {
+  background: rgba(18, 18, 28, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1.5rem;
+  margin-top: 0.75rem;
+  box-shadow: var(--shadow);
+}
+
+.moderation-comment-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  transition: all var(--transition);
+}
+
+.moderation-comment-row:hover {
+  border-color: rgba(248, 113, 113, 0.25);
+  background: rgba(248, 113, 113, 0.02);
+}
+

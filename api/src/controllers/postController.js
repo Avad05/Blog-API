@@ -5,7 +5,10 @@ const getPublishedPosts = async (req, res) => {
   try {
     const posts = await prisma.post.findMany({
       where: { published: true },
-      include: { author: { select: { username: true } } },
+      include: {
+        author: { select: { username: true } },
+        _count: { select: { comments: true } },
+      },
       orderBy: { createdAt: "desc" },
     });
     res.json(posts);
@@ -19,7 +22,10 @@ const getPublishedPosts = async (req, res) => {
 const getAllPosts = async (req, res) => {
   try {
     const posts = await prisma.post.findMany({
-      include: { author: { select: { username: true } } },
+      include: {
+        author: { select: { username: true } },
+        comments: { orderBy: { createdAt: "desc" } },
+      },
       orderBy: { createdAt: "desc" },
     });
     res.json(posts);

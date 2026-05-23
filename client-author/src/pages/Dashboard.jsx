@@ -51,7 +51,7 @@ const Dashboard = () => {
         <StatCard icon={<Clock color="var(--warning)" />} title="Drafts" value={stats.drafts} />
       </div>
 
-      <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+      <div className="dashboard-panel">
         <h3 style={{ fontSize: '1.25rem', fontFamily: 'Outfit, sans-serif', fontWeight: 600, marginBottom: '1.5rem' }}>Quick Actions</h3>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <Link to="/posts" className="btn btn-secondary"><FileText size={18} /> View All Posts</Link>
@@ -62,8 +62,8 @@ const Dashboard = () => {
 };
 
 const StatCard = ({ icon, title, value }) => (
-  <div style={{ background: 'var(--bg-card)', padding: '1.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '1.25rem', boxShadow: 'var(--shadow-sm)' }}>
-    <div style={{ background: 'var(--bg-hover)', padding: '1rem', borderRadius: '12px' }}>
+  <div className="stat-card">
+    <div style={{ background: 'var(--bg-hover)', padding: '1rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {icon}
     </div>
     <div>

@@ -35,7 +35,7 @@ function PostCard({ post, index }) {
       <p className="post-card__excerpt">{excerpt}</p>
       <div className="post-card__footer">
         <span className="post-card__comments">
-          💬 {post.comments?.length ?? 0} comment{post.comments?.length !== 1 ? 's' : ''}
+          💬 {post._count?.comments ?? 0} comment{post._count?.comments !== 1 ? 's' : ''}
         </span>
         <span className="post-card__read">Read more →</span>
       </div>

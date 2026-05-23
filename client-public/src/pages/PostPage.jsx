@@ -110,20 +110,188 @@ function CommentForm({ postId, onCommentAdded }) {
   );
 }
 
-function Comment({ comment }) {
-  const initials = comment.username.slice(0, 2).toUpperCase();
+function buildCommentTree(commentsList) {
+  const map = {};
+  const roots = [];
+
+  commentsList.forEach(comment => {
+    map[comment.id] = { ...comment, replies: [] };
+  });
+
+  commentsList.forEach(comment => {
+    if (comment.parentId) {
+      if (map[comment.parentId]) {
+        map[comment.parentId].replies.push(map[comment.id]);
+      } else {
+        roots.push(map[comment.id]);
+      }
+    } else {
+      roots.push(map[comment.id]);
+    }
+  });
+
+  Object.values(map).forEach(c => {
+    c.replies.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  });
+
+  return roots;
+}
+
+function ReplyForm({ postId, parentId, onReplyAdded, onCancel }) {
+  const [username, setUsername] = useState('');
+  const [content, setContent] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!username.trim() || !content.trim()) {
+      setError('Both fields are required.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/comments/posts/${postId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          username: username.trim(), 
+          content: content.trim(),
+          parentId
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to post reply.');
+
+      setUsername('');
+      setContent('');
+      onReplyAdded(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <div className="comment-item fade-in-up" style={{ background: 'linear-gradient(145deg, var(--bg-card), var(--bg))', border: '1px solid var(--border)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1rem' }}>
-      <div className="comment-item__header" style={{ marginBottom: '1rem' }}>
-        <div className="comment-item__avatar" style={{ width: '40px', height: '40px', fontSize: '0.85rem' }}>{initials}</div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span className="comment-item__username" style={{ fontSize: '1rem' }}>{comment.username}</span>
-          <span className="comment-item__date" style={{ fontSize: '0.75rem' }}>
-            {formatDate(comment.createdAt)} · {formatTime(comment.createdAt)}
-          </span>
+    <form onSubmit={handleSubmit} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginTop: '0.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+        <div>
+          <label className="form-label" style={{ fontSize: '0.7rem' }}>Name</label>
+          <input
+            className="form-input"
+            type="text"
+            placeholder="Your name"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            maxLength={50}
+            style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: 'var(--bg)', borderColor: 'var(--border)' }}
+          />
+        </div>
+        <div>
+          <label className="form-label" style={{ fontSize: '0.7rem' }}>Reply</label>
+          <textarea
+            className="form-textarea"
+            placeholder="Type your reply..."
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            style={{ minHeight: '80px', padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: 'var(--bg)', borderColor: 'var(--border)' }}
+          />
         </div>
       </div>
-      <p className="comment-item__content" style={{ color: 'var(--text)', fontSize: '0.95rem' }}>{comment.content}</p>
+      
+      {error && <p className="form-error" style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>{error}</p>}
+      
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={submitting}
+          style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', borderRadius: '20px' }}
+        >
+          {submitting ? 'Posting...' : 'Post Reply'}
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={onCancel}
+          style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', borderRadius: '20px' }}
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function CommentNode({ comment, postId, onCommentAdded }) {
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const initials = comment.username.slice(0, 2).toUpperCase();
+
+  return (
+    <div className="comment-node fade-in-up" style={{ marginBottom: '1.25rem' }}>
+      <div className="comment-item" style={{ background: 'linear-gradient(145deg, var(--bg-card), var(--bg))', border: '1px solid var(--border)', borderRadius: '16px', padding: '1.25rem' }}>
+        <div className="comment-item__header" style={{ marginBottom: '0.75rem' }}>
+          <div className="comment-item__avatar" style={{ width: '36px', height: '36px', fontSize: '0.8rem' }}>{initials}</div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span className="comment-item__username" style={{ fontSize: '0.95rem' }}>{comment.username}</span>
+            <span className="comment-item__date" style={{ fontSize: '0.7rem' }}>
+              {formatDate(comment.createdAt)} · {formatTime(comment.createdAt)}
+            </span>
+          </div>
+        </div>
+        <p className="comment-item__content" style={{ color: 'var(--text)', fontSize: '0.95rem', marginBottom: '0.75rem' }}>{comment.content}</p>
+        
+        <button 
+          onClick={() => setShowReplyForm(!showReplyForm)}
+          className="comment-action-btn"
+          style={{ 
+            fontSize: '0.78rem', 
+            color: 'var(--accent)', 
+            background: 'rgba(108, 108, 255, 0.08)', 
+            border: '1px solid rgba(108, 108, 255, 0.15)', 
+            cursor: 'pointer',
+            padding: '0.3rem 0.8rem',
+            borderRadius: '50px',
+            transition: 'all 0.2s',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            fontWeight: 500
+          }}
+        >
+          💬 Reply
+        </button>
+      </div>
+
+      {showReplyForm && (
+        <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
+          <ReplyForm 
+            postId={postId} 
+            parentId={comment.id} 
+            onReplyAdded={(newComment) => {
+              onCommentAdded(newComment);
+              setShowReplyForm(false);
+            }} 
+            onCancel={() => setShowReplyForm(false)}
+          />
+        </div>
+      )}
+
+      {comment.replies && comment.replies.length > 0 && (
+        <div className="comment-replies" style={{ marginLeft: '1.5rem', borderLeft: '1px solid var(--border)', paddingLeft: '1.25rem', marginTop: '1rem' }}>
+          {comment.replies.map(reply => (
+            <CommentNode 
+              key={reply.id} 
+              comment={reply} 
+              postId={postId} 
+              onCommentAdded={onCommentAdded} 
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -153,6 +321,8 @@ export default function PostPage() {
   if (loading) return <div className="container" style={{ paddingTop: '5rem' }}><LoadingState /></div>;
   if (error) return <div className="container" style={{ paddingTop: '5rem' }}><ErrorState message={error} /></div>;
   if (!post) return null;
+
+  const commentTree = buildCommentTree(comments);
 
   return (
     <div style={{ position: 'relative' }}>
@@ -195,9 +365,16 @@ export default function PostPage() {
             Discussion <span className="count" style={{ fontSize: '1rem', padding: '0.2rem 0.8rem' }}>{comments.length}</span>
           </h2>
 
-          {comments.length > 0 ? (
-            <div className="comment-list">
-              {comments.map(c => <Comment key={c.id} comment={c} />)}
+          {commentTree.length > 0 ? (
+            <div className="comment-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {commentTree.map(c => (
+                <CommentNode 
+                  key={c.id} 
+                  comment={c} 
+                  postId={post.id}
+                  onCommentAdded={newComment => setComments(prev => [...prev, newComment])}
+                />
+              ))}
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '3rem 1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed var(--border)', color: 'var(--text-subtle)', marginBottom: '2rem' }}>

@@ -88,7 +88,7 @@ const PostEditor = () => {
         {id ? 'Edit Post' : 'Create New Post'}
       </div>
 
-      <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', background: 'var(--bg-card)', padding: '2rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+      <form onSubmit={handleSave} className="dashboard-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {error && <div className="form-error">{error}</div>}
 
         <div className="form-group" style={{ marginBottom: 0 }}>
