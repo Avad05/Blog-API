@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import API_BASE_URL from '../config';
 
 const Login = () => {
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const passwordRef = useRef(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -15,7 +15,9 @@ const Login = () => {
     e.preventDefault();
     setError('');
     
-    if (!username || !password) {
+    const passwordValue = passwordRef.current?.value || '';
+    
+    if (!username || !passwordValue) {
       setError('Please fill in all fields');
       return;
     }
@@ -25,7 +27,7 @@ const Login = () => {
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password: passwordValue })
       });
       
       const data = await res.json();
@@ -38,6 +40,9 @@ const Login = () => {
       navigate('/');
     } catch (err) {
       setError(err.message);
+      if (passwordRef.current) {
+        passwordRef.current.value = '';
+      }
     } finally {
       setLoading(false);
     }
@@ -68,8 +73,7 @@ const Login = () => {
               type="password" 
               className="form-input" 
               placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              ref={passwordRef}
             />
           </div>
           
