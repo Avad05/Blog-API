@@ -7,7 +7,7 @@ A full-stack blogging ecosystem consisting of a RESTful API and two distinct cli
 - **Backend:** Node.js, Express, Prisma ORM (PostgreSQL)
 - **Authentication:** JWT (JSON Web Tokens) with Passport.js
 - **Frontend:** React
-- **Deployment:** Render (API), CloudFlare (Clients)
+- **Deployment:** Render (API), CloudFlare (Pages)
 
 ---
 
