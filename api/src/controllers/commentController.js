@@ -71,4 +71,4 @@ const deleteComment = async (req, res) => {
   }
 };
 
-module.exports = { createComment, deleteComment };
+module.exports = { createComment, deleteComment }
