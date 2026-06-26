@@ -119,4 +119,4 @@ const changePassword = async (req, res) => {
 };
 
 
-module.exports = { register, login, getProfile, changePassword };
+module.exports = { register, login, getProfile, changePassword }
