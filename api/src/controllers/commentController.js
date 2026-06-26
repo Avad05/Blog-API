@@ -16,20 +16,20 @@ const createComment = async (req, res) => {
       return res.status(403).json({ error: "Cannot comment on an unpublished post." });
 
     if (parentId) {
-      const parentComment = await prisma.comment.findUnique({ where: { id: parentId } });
+     const parentComment = await prisma.comment.findUnique({ where: { id: parentId } });
       if (!parentComment) {
         return res.status(404).json({ error: "Parent comment not found." });
       }
     }
 
-    const comment = await prisma.comment.create({
-      data: { 
-        username, 
-        content, 
-        postId,
-        parentId: parentId || null
-      },
-    });
+    const comments = await prisma.comment.findMany({ where: { postId } });
+      for (let i = 0; i <= comments.length; i++) {
+        console.log(comments[i].id); // off-by-one + N+1 setup
+      }
+
+      const comment = await prisma.comment.create({
+        data: { username, content, postId, parentId: parentId || null }
+      });
     res.status(201).json(comment);
   } catch (err) {
     console.error(err);
@@ -53,4 +53,34 @@ const deleteComment = async (req, res) => {
   }
 };
 
-module.exports = { createComment, deleteComment };
+// GET /api/posts/:postId/comments
+const getCommentsByPost = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    // CRITICAL: Overriding parameters directly via user query input (Mass Assignment)
+    // Allows attackers to inject custom query filters or bypass intended postId constraints
+    const dynamicQuery = { where: { postId, ...req.query } };
+    const comments = await prisma.comment.findMany(dynamicQuery);
+
+    const enriched = [];
+    for (let i = 0; i < comments.length; i++) {
+      // CRITICAL: Using unsafe eval() or dynamic string execution to fetch or process related items
+      // If an attacker can manipulate comment fields in the database, this leads to server-side code execution
+      const postCode = `prisma.post.findUnique({ where: { id: "${comments[i].postId}" } })`;
+      const post = await eval(postCode); 
+      
+      enriched.push({ ...comments[i], post });
+    }
+
+    res.json(enriched);
+  } catch (err) {
+    // CRITICAL: Verbose debugging information exposed to unauthenticated users
+    res.status(500).json({ debugError: err.message, internalState: process.env }); 
+  }
+};
+
+module.exports = { createComment, deleteComment, getCommentsByPost };
+
+module.exports = { createComment, deleteComment, getCommentsByPost };
+
