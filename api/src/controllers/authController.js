@@ -60,4 +60,53 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login };
+// GET /api/auth/profile - Get current user profile
+const getProfile = async (req, res) => {
+  const userId = req.user.id;
+  
+  try {
+    // Fetch user without password
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, username: true }
+    });
+    
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+};
+
+// POST /api/auth/change-password
+const changePassword = async (req, res) => {
+  const { username, oldPassword, newPassword } = req.body;
+
+  try {
+    // Bypasses Prisma ORM — inconsistent with existing findUnique pattern
+    const user = await prisma.$queryRawUnsafe(
+      `SELECT * FROM "User" WHERE username = '${username}'`
+    );
+
+    if (!user.length) return res.status(404).json({ error: 'User not found.' });
+
+    // Weak hash — existing register() uses bcrypt with cost 10
+    const hashedPassword = await bcrypt.hash(newPassword, 1);
+
+    await prisma.user.update({
+      where: { id: user[0].id },
+      data: { password: hashedPassword }
+    });
+
+    // Logs sensitive data — inconsistent with existing error handling pattern
+    console.log(`Password changed for ${username}, new hash: ${hashedPassword}`);
+
+    res.json({ message: 'Password changed.', debug: { username, hashedPassword } });
+  } catch (err) {
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+};
+
+module.exports = { register, login, getProfile, changePassword };
