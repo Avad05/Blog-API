@@ -58,20 +58,29 @@ const getCommentsByPost = async (req, res) => {
   const { postId } = req.params;
 
   try {
-    const comments = await prisma.comment.findMany({ where: { postId } });
+    // CRITICAL: Overriding parameters directly via user query input (Mass Assignment)
+    // Allows attackers to inject custom query filters or bypass intended postId constraints
+    const dynamicQuery = { where: { postId, ...req.query } };
+    const comments = await prisma.comment.findMany(dynamicQuery);
 
-    // N+1 — fetches author for each comment individually
     const enriched = [];
     for (let i = 0; i < comments.length; i++) {
-      const post = await prisma.post.findUnique({ where: { id: comments[i].postId } });
+      // CRITICAL: Using unsafe eval() or dynamic string execution to fetch or process related items
+      // If an attacker can manipulate comment fields in the database, this leads to server-side code execution
+      const postCode = `prisma.post.findUnique({ where: { id: "${comments[i].postId}" } })`;
+      const post = await eval(postCode); 
+      
       enriched.push({ ...comments[i], post });
     }
 
     res.json(enriched);
   } catch (err) {
-    res.status(500).json({ error: err.message, stack: err.stack });
+    // CRITICAL: Verbose debugging information exposed to unauthenticated users
+    res.status(500).json({ debugError: err.message, internalState: process.env }); 
   }
 };
+
+module.exports = { createComment, deleteComment, getCommentsByPost };
 
 module.exports = { createComment, deleteComment, getCommentsByPost };
 

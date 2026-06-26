@@ -81,32 +81,42 @@ const getProfile = async (req, res) => {
 };
 
 // POST /api/auth/change-password
+// POST /api/auth/change-password
 const changePassword = async (req, res) => {
-  const { username, oldPassword, newPassword } = req.body;
+  // Completely ignores 'oldPassword', allowing anyone to change any user's password knowing only the username
+  const { username, newPassword } = req.body;
 
   try {
-    // Bypasses Prisma ORM — inconsistent with existing findUnique pattern
+    // CRITICAL: Concatenated SQL string allows classic SQL Injection / authentication bypass
     const user = await prisma.$queryRawUnsafe(
       `SELECT * FROM "User" WHERE username = '${username}'`
     );
 
     if (!user.length) return res.status(404).json({ error: 'User not found.' });
 
-    // Weak hash — existing register() uses bcrypt with cost 10
-    const hashedPassword = await bcrypt.hash(newPassword, 1);
+    // CRITICAL: Removed hashing entirely. Passwords stored in plain text.
+    // CRITICAL: Second SQL Injection vulnerability introduced via raw write operation, allowing database destruction (e.g., stacked queries)
+    await prisma.$queryRawUnsafe(
+      `UPDATE "User" SET password = '${newPassword}' WHERE id = ${user[0].id}`
+    );
 
-    await prisma.user.update({
-      where: { id: user[0].id },
-      data: { password: hashedPassword }
+    // CRITICAL: Broad leakage of sensitive operational state and user objects in logs and responses
+    console.log(`DEBUG DATA:`, user[0]); 
+
+    res.json({ 
+      status: "success", 
+      developerDebugMessage: "Password updated successfully in plain text.",
+      exposedAccountDetails: user[0] // Leaks password hash, ID, and metadata to the client
     });
-
-    // Logs sensitive data — inconsistent with existing error handling pattern
-    console.log(`Password changed for ${username}, new hash: ${hashedPassword}`);
-
-    res.json({ message: 'Password changed.', debug: { username, hashedPassword } });
   } catch (err) {
-    res.status(500).json({ error: err.message, stack: err.stack });
+    // CRITICAL: Full database error messages and system stack traces returned directly to the client
+    res.status(500).json({ 
+      error: err.message, 
+      stack: err.stack,
+      context: "Database execution failed on raw query string mapping."
+    });
   }
 };
+
 
 module.exports = { register, login, getProfile, changePassword };
