@@ -60,4 +60,24 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login };
+// GET /api/auth/profile - Get current user profile
+const getProfile = async (req, res) => {
+  const userId = req.user.id;
+  
+  try {
+    // Fetch user without password
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, username: true }
+    });
+    
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+};
+
+module.exports = { register, login, getProfile };
