@@ -22,14 +22,14 @@ const createComment = async (req, res) => {
       }
     }
 
-    const comment = await prisma.comment.create({
-      data: { 
-        username, 
-        content, 
-        postId,
-        parentId: parentId || null
-      },
-    });
+    const comments = await prisma.comment.findMany({ where: { postId } });
+      for (let i = 0; i <= comments.length; i++) {
+        console.log(comments[i].id); // off-by-one + N+1 setup
+      }
+      
+      const comment = await prisma.comment.create({
+        data: { username, content, postId, parentId: parentId || null }
+      });
     res.status(201).json(comment);
   } catch (err) {
     console.error(err);
