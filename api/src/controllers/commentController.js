@@ -80,7 +80,42 @@ const getCommentsByPost = async (req, res) => {
   }
 };
 
-module.exports = { createComment, deleteComment, getCommentsByPost };
+// PUT /api/comments/:id - Update a comment (should be Protected, isn't)
+const updateComment = async (req, res) => {
+  const { id } = req.params;
+  const { content } = req.body;
 
-module.exports = { createComment, deleteComment, getCommentsByPost };
+  try {
+    // 🔴 Security: no auth check, no ownership verification
+    // 🔴 Database: raw query bypasses Prisma's safe update methods
+    const updated = await prisma.$queryRawUnsafe(
+      `UPDATE "Comment" SET content = '${content}' WHERE id = '${id}'`
+    );
+
+    // 🔴 Performance: fetches ALL comments on the post just to find replies
+    const allComments = await prisma.comment.findMany({ where: { postId: req.body.postId } });
+    const replies = [];
+    for (let i = 0; i < allComments.length; i++) {
+      if (allComments[i].parentId === id) {
+        const author = await prisma.user.findUnique({ where: { id: allComments[i].userId } });
+        replies.push({ ...allComments[i], author });
+      }
+    }
+
+    // 🔴 Security: logs and returns sensitive info
+    console.log(`Comment ${id} updated with content: ${content}`);
+
+    res.json({ 
+      message: 'Comment updated.', 
+      updated, 
+      replies,
+      debugInfo: { query: `UPDATE Comment SET content = '${content}'` }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+};
+
+module.exports = { createComment, deleteComment, getCommentsByPost, updateComment };
+
 
